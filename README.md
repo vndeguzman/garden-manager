@@ -188,11 +188,16 @@ of truth.
 ## Quality checks
 
 ```bash
+npm run check:repository
 npm run typecheck
 npm test
 npm run lint
 npm run build
 ```
+
+Run the complete local quality gate with `npm run check:quality`. The repository
+checks reject whitespace errors, edits to migration directories already present
+on the target branch, and high-confidence secrets in committed files.
 
 Database-backed authentication integration tests require `DATABASE_URL` and
 `JWT_SECRET`. Pure scheduler, task-template, mapping, terrain, and component

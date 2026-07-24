@@ -1,0 +1,122 @@
+name: Quality gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Repository checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      QUALITY_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Prepare log directory
+        run: mkdir -p artifacts
+
+      - name: Install dependencies
+        id: install
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm ci 2>&1 | tee artifacts/npm-ci.log
+
+      - name: Check repository integrity
+        id: repository
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run check:repository 2>&1 | tee artifacts/repository-checks.log
+
+      - name: Typecheck
+        id: typecheck
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run typecheck 2>&1 | tee artifacts/typecheck.log
+
+      - name: Test
+        id: test
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee artifacts/test.log
+
+      - name: Lint
+        id: lint
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run lint 2>&1 | tee artifacts/lint.log
+
+      - name: Build
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee artifacts/build.log
+
+      - name: Evaluate check results
+        if: always()
+        env:
+          INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          REPOSITORY_OUTCOME: ${{ steps.repository.outcome }}
+          TYPECHECK_OUTCOME: ${{ steps.typecheck.outcome }}
+          TEST_OUTCOME: ${{ steps.test.outcome }}
+          LINT_OUTCOME: ${{ steps.lint.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+        shell: bash
+        run: |
+          outcomes=(
+            "$INSTALL_OUTCOME"
+            "$REPOSITORY_OUTCOME"
+            "$TYPECHECK_OUTCOME"
+            "$TEST_OUTCOME"
+            "$LINT_OUTCOME"
+            "$BUILD_OUTCOME"
+          )
+          for outcome in "${outcomes[@]}"; do
+            if [[ "$outcome" != "success" ]]; then
+              echo "One or more quality checks failed."
+              exit 1
+            fi
+          done
+          echo "All quality checks passed."
+
+      - name: Preserve failed-check logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-logs-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 14
