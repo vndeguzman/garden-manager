@@ -62,6 +62,8 @@ docker compose ps
 ```
 
 The backend applies Prisma migrations automatically before it starts.
+For backup, upgrade, verification, rollback, and release procedures, see
+[`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 Seed the representative workspace once:
 
@@ -215,6 +217,7 @@ garden-manager/
 ├── frontend/
 │   ├── public/             # PWA manifest and push service worker
 │   └── src/                # map-first React workspace
+├── DEPLOYMENT.md           # backup, deployment, verification, and rollback
 ├── docker-compose.yml
 └── ROADMAP.md
 ```

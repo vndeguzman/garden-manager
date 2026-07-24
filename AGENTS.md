@@ -47,4 +47,5 @@ Database integration tests require a disposable `DATABASE_URL` and
 - Require explicit user approval before pushing, merging, deleting branches or
   tags, force-pushing, resetting, or rewriting history.
 
-Read `VERSION_CONTROL.md` for release, rollback, backup, and AI-agent commands.
+Read `VERSION_CONTROL.md` for Git and AI-agent commands. Read `DEPLOYMENT.md`
+before changing deployment, migration, backup, restore, or release behavior.
