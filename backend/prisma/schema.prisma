@@ -1,0 +1,1260 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  STAFF
+}
+
+enum IrrigationType {
+  DRIP
+  SPRINKLER
+  MANUAL
+  NONE
+}
+
+enum PlantStatus {
+  SEEDLING
+  GROWING
+  FLOWERING
+  FRUITING
+  HARVESTED
+  REMOVED
+}
+
+enum CareTaskType {
+  WATER
+  FERTILIZE
+  PEST_CONTROL
+  PRUNE
+  HARVEST
+  OBSERVE
+  DRIP_MAINTENANCE
+  WEED
+  MULCH
+  TRANSPLANT
+  TRELLIS
+  SOIL_TEST
+  POLLINATE
+}
+
+enum PlotTaskType {
+  DRIP_INSPECTION
+  DRIP_FLUSH
+  FILTER_CLEAN
+  SPRINKLER_INSPECTION
+  CHECK_MOISTURE
+  WEED
+  MULCH_CHECK
+  SOIL_TEST
+  PEST_SCOUT
+  BED_MAINTENANCE
+}
+
+enum HealthStatus {
+  HEALTHY
+  DEFICIENCY_SUSPECTED
+  PEST_DAMAGE
+  DISEASE
+  CRITICAL
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum ScopeType {
+  GARDEN
+  PLOT
+  PLOT_ZONE
+  PLANTING
+  PLANT
+  ASSET
+  TOOL
+  WATER_SOURCE
+  MEDIUM_BATCH
+  HARVEST_LOT
+}
+
+enum MapGeometryType {
+  POINT
+  LINE
+  POLYGON
+  RECTANGLE
+  CIRCLE
+}
+
+enum MapEntityType {
+  PLOT
+  PLOT_ZONE
+  PLANTING
+  PLANT
+  TREE
+  ASSET
+  TOOL
+  ELEVATION
+  CUSTOM
+}
+
+enum AssetCategory {
+  WATER
+  IRRIGATION
+  STRUCTURE
+  ENVIRONMENT
+  INSTRUMENT
+  STORAGE
+  OTHER
+}
+
+enum AssetStatus {
+  ACTIVE
+  INACTIVE
+  DAMAGED
+  MAINTENANCE
+  RETIRED
+}
+
+enum ToolStatus {
+  AVAILABLE
+  RESERVED
+  IN_USE
+  LOANED
+  MAINTENANCE_DUE
+  UNDER_REPAIR
+  DAMAGED
+  MISSING
+  RETIRED
+}
+
+enum WorkTaskCategory {
+  CARE
+  OBSERVATION
+  MEASUREMENT
+  IRRIGATION
+  APPLICATION
+  HARVEST
+  REPAIR
+  IMPROVEMENT
+  INVENTORY
+  SAFETY
+  CALIBRATION
+  DATA_QUALITY
+}
+
+enum WorkTaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  SNOOZED
+  CANCELLED
+}
+
+enum TaskCompletionMode {
+  WHOLE_SCOPE
+  PER_TARGET
+  QUANTITY_BASED
+  CHECKLIST
+}
+
+enum MaterialCategory {
+  FERTILIZER
+  AMENDMENT
+  GROWING_MEDIUM
+  SEED
+  PROPAGATION
+  PESTICIDE
+  BIOLOGICAL
+  ENZYME
+  HORMONE
+  CONSUMABLE
+  OTHER
+}
+
+enum InventoryTransactionType {
+  PURCHASE
+  CONSUME
+  TRANSFER
+  ADJUST
+  EXPIRE
+  WASTE
+  RETURN
+  SPLIT
+  MERGE
+}
+
+enum FactorValueType {
+  NUMERIC
+  NUMERIC_RANGE
+  ORDINAL
+  CATEGORY
+  BOOLEAN
+  PRESENCE_ABSENCE
+  TEXT
+}
+
+enum ObservationMode {
+  AUTOMATIC_SENSOR
+  MANUAL_INSTRUMENT
+  TEST_KIT
+  LAB_RESULT
+  MANUAL_NUMERIC
+  QUALITATIVE_OBSERVATION
+  USER_ESTIMATE
+  DERIVED_CALCULATION
+  IMPORTED_DATA
+}
+
+enum EvidenceQuality {
+  LAB_CONFIRMED
+  CALIBRATED_INSTRUMENT
+  UNCALIBRATED_INSTRUMENT
+  TEST_KIT
+  REPEATED_MANUAL_OBSERVATION
+  SINGLE_MANUAL_OBSERVATION
+  DERIVED_ESTIMATE
+  UNKNOWN
+}
+
+enum AssessmentStatus {
+  UNKNOWN
+  OPTIMAL
+  WATCH
+  LOW
+  HIGH
+  CRITICAL
+  POSSIBLE_DEFICIENCY
+  PROJECTED_DEFICIENCY
+  CONFIRMED_DEFICIENCY
+  POSSIBLE_EXCESS
+  PROJECTED_EXCESS
+  CONFIRMED_EXCESS
+}
+
+enum IncidentPriority {
+  P0
+  P1
+  P2
+  P3
+  P4
+}
+
+enum IncidentStatus {
+  NEW
+  ACKNOWLEDGED
+  IN_PROGRESS
+  SNOOZED
+  RESOLVED
+  DISMISSED
+}
+
+enum NotificationChannel {
+  WEB_PUSH
+  EMAIL
+  SPEAKER
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+  ACKNOWLEDGED
+  SKIPPED
+}
+
+enum MarketType {
+  INPUT_SUPPLIER
+  FARMGATE
+  WHOLESALE
+  RETAIL
+  CONTRACT
+  ONLINE
+  INTERNAL
+}
+
+enum DispositionType {
+  WHOLESALE
+  RETAIL
+  CONTRACT_BUYER
+  ONLINE
+  PERSONAL_USE
+  DONATION
+  SEED_SAVING
+  ANIMAL_FEED
+  COMPOST
+  WASTE
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(OWNER)
+  createdAt    DateTime @default(now())
+
+  gardens               Garden[]
+  gardensCareGiving     GardenCareGiver[]
+  observations          Observation[]
+  notificationEndpoints NotificationEndpoint[]
+
+  @@map("users")
+}
+
+model Garden {
+  id                    String                 @id @default(uuid())
+  name                  String
+  location              String
+  description           String?
+  latitude              Float?
+  longitude             Float?
+  ownerId               String
+  owner                 User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  plots                 Plot[]
+  careGivers            GardenCareGiver[]
+  map                   GardenMap?
+  assets                GardenAsset[]
+  tools                 Tool[]
+  materials             Material[]
+  inventoryLocations    InventoryLocation[]
+  applications          ApplicationEvent[]
+  factorDefinitions     FactorDefinition[]
+  requirementProfiles   RequirementProfile[]
+  instruments           Instrument[]
+  measurements          Measurement[]
+  assessments           FactorAssessment[]
+  workTasks             WorkTask[]
+  incidents             Incident[]
+  notificationEndpoints NotificationEndpoint[]
+  harvestEvents         HarvestEvent[]
+  markets               Market[]
+  sales                 Sale[]
+  entityMedia           EntityMedia[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@index([ownerId])
+  @@map("gardens")
+}
+
+model GardenCareGiver {
+  id        String   @id @default(uuid())
+  gardenId  String
+  garden    Garden   @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([gardenId, userId])
+  @@index([gardenId])
+  @@index([userId])
+  @@map("garden_care_givers")
+}
+
+model Plot {
+  id             String         @id @default(uuid())
+  gardenId       String
+  garden         Garden         @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  areaSqMeters   Float
+  soilType       String
+  irrigationType IrrigationType @default(NONE)
+  latitude       Float?
+  longitude      Float?
+  imageUrls      String[]       @default([])
+  plants         Plant[]
+  media          PlotMedia[]
+  tasks          PlotTask[]
+  zones          PlotZone[]
+  plantings      Planting[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([gardenId])
+  @@map("plots")
+}
+
+model Plant {
+  id                  String        @id @default(uuid())
+  plotId              String
+  plot                Plot          @relation(fields: [plotId], references: [id], onDelete: Cascade)
+  plantingId          String?
+  planting            Planting?     @relation(fields: [plantingId], references: [id], onDelete: SetNull)
+  species             String
+  scientificName      String?
+  variety             String?
+  plantedAt           DateTime
+  status              PlantStatus   @default(SEEDLING)
+  positionLabel       String?
+  careNotes           String?
+  waterRequirement    String?
+  sunlightRequirement String?
+  spacingCm           Float?
+  expectedYieldKg     Float?
+  actualYieldKg       Float         @default(0)
+  expectedHarvestAt   DateTime?
+  careTasks           CareTask[]
+  observations        Observation[]
+  media               PlantMedia[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([plotId])
+  @@index([plantingId])
+  @@map("plants")
+}
+
+model CareTask {
+  id              String          @id @default(uuid())
+  plantId         String
+  plant           Plant           @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  type            CareTaskType
+  intervalDays    Int
+  lastCompletedAt DateTime?
+  nextDueAt       DateTime
+  notes           String?
+  isActive        Boolean         @default(true)
+  media           CareTaskMedia[]
+
+  // type-specific metadata, only one populated depending on `type`
+  waterAmountLiters  Float?
+  waterIntakeMM      Float? // For DRIP_MAINTENANCE: target intake in millimeters
+  fertilizerName     String?
+  method             String?
+  harvestQuantityKg  Float? // For HARVEST: yield in kilograms
+  harvestQualityDesc String? // For HARVEST: quality description
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([plantId])
+  @@index([nextDueAt])
+  @@map("care_tasks")
+}
+
+model CareTaskMedia {
+  id         String    @id @default(uuid())
+  careTaskId String
+  careTask   CareTask  @relation(fields: [careTaskId], references: [id], onDelete: Cascade)
+  type       MediaType
+  url        String
+  caption    String?
+  capturedAt DateTime  @default(now())
+  isCover    Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([careTaskId])
+  @@map("care_task_media")
+}
+
+model Observation {
+  id           String             @id @default(uuid())
+  plantId      String
+  plant        Plant              @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  healthStatus HealthStatus
+  note         String
+  createdById  String
+  createdBy    User               @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  media        ObservationMedia[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([plantId])
+  @@map("observations")
+}
+
+model ObservationMedia {
+  id            String      @id @default(uuid())
+  observationId String
+  observation   Observation @relation(fields: [observationId], references: [id], onDelete: Cascade)
+  type          MediaType
+  url           String
+  caption       String?
+  capturedAt    DateTime    @default(now())
+  isCover       Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([observationId])
+  @@map("observation_media")
+}
+
+model PlotMedia {
+  id         String    @id @default(uuid())
+  plotId     String
+  plot       Plot      @relation(fields: [plotId], references: [id], onDelete: Cascade)
+  type       MediaType
+  url        String
+  caption    String?
+  capturedAt DateTime  @default(now())
+  isCover    Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([plotId])
+  @@map("plot_media")
+}
+
+model PlantMedia {
+  id         String    @id @default(uuid())
+  plantId    String
+  plant      Plant     @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  type       MediaType
+  url        String
+  caption    String?
+  capturedAt DateTime  @default(now())
+  isCover    Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([plantId])
+  @@map("plant_media")
+}
+
+model PlotTask {
+  id              String       @id @default(uuid())
+  plotId          String
+  plot            Plot         @relation(fields: [plotId], references: [id], onDelete: Cascade)
+  type            PlotTaskType
+  title           String
+  intervalDays    Int
+  lastCompletedAt DateTime?
+  nextDueAt       DateTime
+  notes           String?
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([plotId, type, title])
+  @@index([plotId])
+  @@index([nextDueAt])
+  @@map("plot_tasks")
+}
+
+model PlotZone {
+  id          String     @id @default(uuid())
+  plotId      String
+  plot        Plot       @relation(fields: [plotId], references: [id], onDelete: Cascade)
+  name        String
+  kind        String
+  description String?
+  plantings   Planting[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([plotId])
+  @@map("plot_zones")
+}
+
+model Planting {
+  id                   String              @id @default(uuid())
+  plotId               String
+  plot                 Plot                @relation(fields: [plotId], references: [id], onDelete: Cascade)
+  zoneId               String?
+  zone                 PlotZone?           @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  requirementProfileId String?
+  requirementProfile   RequirementProfile? @relation(fields: [requirementProfileId], references: [id], onDelete: SetNull)
+  preferredMarketId    String?
+  preferredMarket      Market?             @relation("PlantingPreferredMarket", fields: [preferredMarketId], references: [id], onDelete: SetNull)
+  marketCommodity      String?
+  name                 String
+  species              String
+  scientificName       String?
+  variety              String?
+  plantedAt            DateTime
+  quantity             Int                 @default(1)
+  trackingMode         String              @default("BATCH")
+  status               PlantStatus         @default(SEEDLING)
+  expectedYieldMin     Decimal?            @db.Decimal(14, 3)
+  expectedYieldMax     Decimal?            @db.Decimal(14, 3)
+  yieldUnit            String?             @default("kg")
+  expectedHarvestStart DateTime?
+  expectedHarvestEnd   DateTime?
+  notes                String?
+  plants               Plant[]
+  harvestEvents        HarvestEvent[]
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@index([plotId])
+  @@index([zoneId])
+  @@index([preferredMarketId])
+  @@map("plantings")
+}
+
+model GardenMap {
+  id                 String           @id @default(uuid())
+  gardenId           String           @unique
+  garden             Garden           @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  width              Float            @default(30)
+  height             Float            @default(20)
+  unit               String           @default("m")
+  gridSize           Float            @default(1)
+  backgroundImageUrl String?
+  backgroundOpacity  Float            @default(0.35)
+  showContours       Boolean          @default(false)
+  contourInterval    Float            @default(0.25)
+  features           MapFeature[]
+  elevationPoints    ElevationPoint[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@map("garden_maps")
+}
+
+model MapFeature {
+  id           String                   @id @default(uuid())
+  gardenMapId  String
+  gardenMap    GardenMap                @relation(fields: [gardenMapId], references: [id], onDelete: Cascade)
+  entityType   MapEntityType
+  entityId     String?
+  label        String
+  geometryType MapGeometryType
+  geometry     Json
+  rotation     Float                    @default(0)
+  zIndex       Int                      @default(0)
+  locked       Boolean                  @default(false)
+  hidden       Boolean                  @default(false)
+  style        Json?
+  influences   EnvironmentalInfluence[]
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+
+  @@index([gardenMapId])
+  @@index([entityType, entityId])
+  @@map("map_features")
+}
+
+model GardenAsset {
+  id                  String                   @id @default(uuid())
+  gardenId            String
+  garden              Garden                   @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  category            AssetCategory
+  subtype             String
+  name                String
+  status              AssetStatus              @default(ACTIVE)
+  installedAt         DateTime?
+  capacity            Decimal?                 @db.Decimal(14, 3)
+  capacityUnit        String?
+  baseElevation       Float?
+  topElevation        Float?
+  specifications      Json?
+  notes               String?
+  outgoingConnections AssetConnection[]        @relation("AssetConnectionFrom")
+  incomingConnections AssetConnection[]        @relation("AssetConnectionTo")
+  influences          EnvironmentalInfluence[]
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  @@index([gardenId])
+  @@map("garden_assets")
+}
+
+model AssetConnection {
+  id             String      @id @default(uuid())
+  fromAssetId    String
+  fromAsset      GardenAsset @relation("AssetConnectionFrom", fields: [fromAssetId], references: [id], onDelete: Cascade)
+  toAssetId      String
+  toAsset        GardenAsset @relation("AssetConnectionTo", fields: [toAssetId], references: [id], onDelete: Cascade)
+  connectionType String
+  direction      String      @default("FORWARD")
+  capacity       Decimal?    @db.Decimal(14, 3)
+  capacityUnit   String?
+  status         String      @default("ACTIVE")
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([fromAssetId, toAssetId, connectionType])
+  @@index([fromAssetId])
+  @@index([toAssetId])
+  @@map("asset_connections")
+}
+
+model EnvironmentalInfluence {
+  id            String       @id @default(uuid())
+  assetId       String?
+  asset         GardenAsset? @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  mapFeatureId  String?
+  mapFeature    MapFeature?  @relation(fields: [mapFeatureId], references: [id], onDelete: Cascade)
+  factorCode    String
+  effectType    String
+  geometry      Json
+  magnitude     Decimal?     @db.Decimal(14, 4)
+  unitOrScale   String?
+  direction     Float?
+  seasonalStart DateTime?
+  seasonalEnd   DateTime?
+  confidence    Int          @default(50)
+  evidence      String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([assetId])
+  @@index([mapFeatureId])
+  @@map("environmental_influences")
+}
+
+model ElevationPoint {
+  id          String    @id @default(uuid())
+  gardenMapId String
+  gardenMap   GardenMap @relation(fields: [gardenMapId], references: [id], onDelete: Cascade)
+  x           Float
+  y           Float
+  elevation   Float
+  unit        String    @default("m")
+  datum       String    @default("RELATIVE")
+  source      String    @default("USER_ESTIMATE")
+  accuracy    Float?
+  measuredAt  DateTime  @default(now())
+  confidence  Int       @default(50)
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([gardenMapId])
+  @@map("elevation_points")
+}
+
+model Tool {
+  id               String     @id @default(uuid())
+  gardenId         String
+  garden           Garden     @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  name             String
+  category         String
+  brand            String?
+  model            String?
+  serialNumber     String?
+  status           ToolStatus @default(AVAILABLE)
+  condition        String     @default("GOOD")
+  purchaseDate     DateTime?
+  purchaseCost     Decimal?   @db.Decimal(14, 2)
+  replacementValue Decimal?   @db.Decimal(14, 2)
+  currency         String     @default("PHP")
+  storageLocation  String?
+  currentHolder    String?
+  powerSource      String?
+  specifications   Json?
+  maintenanceDueAt DateTime?
+  notes            String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([gardenId])
+  @@index([status])
+  @@map("tools")
+}
+
+model Material {
+  id                  String            @id @default(uuid())
+  gardenId            String
+  garden              Garden            @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  name                String
+  brand               String?
+  category            MaterialCategory
+  formulation         String?
+  defaultUnit         String
+  manufacturer        String?
+  composition         Json?
+  profile             Json?
+  storageInstructions String?
+  notes               String?
+  lots                InventoryLot[]
+  applicationLines    ApplicationLine[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([gardenId])
+  @@map("materials")
+}
+
+model InventoryLocation {
+  id          String         @id @default(uuid())
+  gardenId    String
+  garden      Garden         @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  lots        InventoryLot[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([gardenId, name])
+  @@map("inventory_locations")
+}
+
+model InventoryLot {
+  id               String                 @id @default(uuid())
+  materialId       String
+  material         Material               @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  locationId       String?
+  location         InventoryLocation?     @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  lotNumber        String?
+  supplier         String?
+  purchaseDate     DateTime?
+  openedAt         DateTime?
+  expiryDate       DateTime?
+  initialQuantity  Decimal                @db.Decimal(16, 4)
+  currentQuantity  Decimal                @db.Decimal(16, 4)
+  unit             String
+  unitCost         Decimal?               @db.Decimal(14, 4)
+  currency         String                 @default("PHP")
+  status           String                 @default("ACTIVE")
+  notes            String?
+  transactions     InventoryTransaction[]
+  applicationLines ApplicationLine[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  @@index([materialId])
+  @@index([locationId])
+  @@index([expiryDate])
+  @@map("inventory_lots")
+}
+
+model InventoryTransaction {
+  id         String                   @id @default(uuid())
+  lotId      String
+  lot        InventoryLot             @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  type       InventoryTransactionType
+  quantity   Decimal                  @db.Decimal(16, 4)
+  unit       String
+  occurredAt DateTime                 @default(now())
+  reference  String?
+  notes      String?
+  createdAt  DateTime                 @default(now())
+
+  @@index([lotId, occurredAt])
+  @@map("inventory_transactions")
+}
+
+model ApplicationEvent {
+  id             String            @id @default(uuid())
+  gardenId       String
+  garden         Garden            @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  title          String
+  targetType     ScopeType
+  targetId       String
+  targetName     String
+  targetSnapshot Json?
+  appliedAt      DateTime          @default(now())
+  method         String?
+  treatedArea    Decimal?          @db.Decimal(14, 3)
+  treatedCount   Int?
+  weather        String?
+  notes          String?
+  lines          ApplicationLine[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([gardenId, appliedAt])
+  @@index([targetType, targetId])
+  @@map("application_events")
+}
+
+model ApplicationLine {
+  id             String           @id @default(uuid())
+  applicationId  String
+  application    ApplicationEvent @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  materialId     String
+  material       Material         @relation(fields: [materialId], references: [id], onDelete: Restrict)
+  inventoryLotId String?
+  inventoryLot   InventoryLot?    @relation(fields: [inventoryLotId], references: [id], onDelete: SetNull)
+  productAmount  Decimal          @db.Decimal(16, 4)
+  productUnit    String
+  carrierVolume  Decimal?         @db.Decimal(16, 4)
+  carrierUnit    String?
+  rateValue      Decimal?         @db.Decimal(16, 4)
+  rateUnit       String?
+  notes          String?
+
+  @@index([applicationId])
+  @@index([materialId])
+  @@map("application_lines")
+}
+
+model FactorDefinition {
+  id               String             @id @default(uuid())
+  gardenId         String
+  garden           Garden             @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  category         String
+  code             String
+  name             String
+  description      String?
+  valueType        FactorValueType
+  supportedUnits   Json?
+  qualitativeScale Json?
+  requirements     RequirementRange[]
+  measurements     Measurement[]
+  assessments      FactorAssessment[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@unique([gardenId, code])
+  @@index([gardenId, category])
+  @@map("factor_definitions")
+}
+
+model RequirementProfile {
+  id             String             @id @default(uuid())
+  gardenId       String
+  garden         Garden             @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  name           String
+  species        String?
+  scientificName String?
+  variety        String?
+  growingMethod  String?
+  source         String?
+  confidence     Int                @default(50)
+  requirements   RequirementRange[]
+  plantings      Planting[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([gardenId])
+  @@map("requirement_profiles")
+}
+
+model RequirementRange {
+  id              String             @id @default(uuid())
+  profileId       String
+  profile         RequirementProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  factorId        String
+  factor          FactorDefinition   @relation(fields: [factorId], references: [id], onDelete: Cascade)
+  growthStage     String?
+  criticalMinimum Decimal?           @db.Decimal(16, 4)
+  targetMinimum   Decimal?           @db.Decimal(16, 4)
+  targetMaximum   Decimal?           @db.Decimal(16, 4)
+  criticalMaximum Decimal?           @db.Decimal(16, 4)
+  targetOrdinal   Json?
+  preferredUnit   String?
+  notes           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@unique([profileId, factorId, growthStage])
+  @@map("requirement_ranges")
+}
+
+model Instrument {
+  id                      String        @id @default(uuid())
+  gardenId                String
+  garden                  Garden        @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  name                    String
+  type                    String
+  manufacturer            String?
+  model                   String?
+  serialNumber            String?
+  supportedFactors        Json?
+  supportedUnits          Json?
+  resolution              String?
+  accuracy                String?
+  calibrationIntervalDays Int?
+  lastCalibrationAt       DateTime?
+  nextCalibrationAt       DateTime?
+  status                  String        @default("ACTIVE")
+  measurements            Measurement[]
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  @@index([gardenId])
+  @@map("instruments")
+}
+
+model Measurement {
+  id              String           @id @default(uuid())
+  gardenId        String
+  garden          Garden           @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  factorId        String
+  factor          FactorDefinition @relation(fields: [factorId], references: [id], onDelete: Cascade)
+  targetType      ScopeType
+  targetId        String
+  targetName      String
+  numericValue    Decimal?         @db.Decimal(16, 4)
+  numericMinimum  Decimal?         @db.Decimal(16, 4)
+  numericMaximum  Decimal?         @db.Decimal(16, 4)
+  textValue       String?
+  unit            String?
+  mode            ObservationMode
+  evidenceQuality EvidenceQuality
+  instrumentId    String?
+  instrument      Instrument?      @relation(fields: [instrumentId], references: [id], onDelete: SetNull)
+  measuredAt      DateTime         @default(now())
+  confidence      Int              @default(50)
+  depthCm         Decimal?         @db.Decimal(10, 2)
+  locationX       Float?
+  locationY       Float?
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([gardenId, measuredAt])
+  @@index([factorId, targetType, targetId, measuredAt])
+  @@map("measurements")
+}
+
+model FactorAssessment {
+  id                    String           @id @default(uuid())
+  gardenId              String
+  garden                Garden           @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  factorId              String
+  factor                FactorDefinition @relation(fields: [factorId], references: [id], onDelete: Cascade)
+  targetType            ScopeType
+  targetId              String
+  targetName            String
+  status                AssessmentStatus
+  evidence              String
+  projectedValue        Decimal?         @db.Decimal(16, 4)
+  projectedUnit         String?
+  projectionHorizonDays Int?
+  confidence            Int              @default(50)
+  assumptions           Json?
+  assessedAt            DateTime         @default(now())
+  notes                 String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  @@index([gardenId, assessedAt])
+  @@index([factorId, targetType, targetId])
+  @@map("factor_assessments")
+}
+
+model WorkTask {
+  id                String             @id @default(uuid())
+  gardenId          String
+  garden            Garden             @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  incidentId        String?
+  incident          Incident?          @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+  title             String
+  category          WorkTaskCategory
+  targetType        ScopeType
+  targetId          String
+  targetName        String
+  affectedSnapshot  Json?
+  completionMode    TaskCompletionMode @default(WHOLE_SCOPE)
+  status            WorkTaskStatus     @default(TODO)
+  priority          Int                @default(50)
+  dueAt             DateTime?
+  recurrenceDays    Int?
+  nextDueAt         DateTime?
+  estimatedMinutes  Int?
+  estimatedCost     Decimal?           @db.Decimal(14, 2)
+  currency          String             @default("PHP")
+  requiredTools     Json?
+  requiredMaterials Json?
+  notes             String?
+  progress          WorkTaskProgress[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([gardenId, status, dueAt])
+  @@index([targetType, targetId])
+  @@map("work_tasks")
+}
+
+model WorkTaskProgress {
+  id          String         @id @default(uuid())
+  taskId      String
+  task        WorkTask       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  targetType  ScopeType
+  targetId    String
+  targetName  String
+  status      WorkTaskStatus @default(TODO)
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([taskId, targetType, targetId])
+  @@map("work_task_progress")
+}
+
+model Incident {
+  id                String                 @id @default(uuid())
+  gardenId          String
+  garden            Garden                 @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  fingerprint       String
+  priority          IncidentPriority
+  status            IncidentStatus         @default(NEW)
+  category          String
+  title             String
+  summary           String
+  targetType        ScopeType
+  targetId          String
+  targetName        String
+  score             Int
+  confidence        Int
+  reasons           Json
+  recommendedAction String?
+  detectedAt        DateTime               @default(now())
+  dueAt             DateTime?
+  acknowledgedAt    DateTime?
+  resolvedAt        DateTime?
+  workTasks         WorkTask[]
+  deliveries        NotificationDelivery[]
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  @@unique([gardenId, fingerprint])
+  @@index([gardenId, status, priority])
+  @@map("incidents")
+}
+
+model NotificationEndpoint {
+  id               String                 @id @default(uuid())
+  gardenId         String
+  garden           Garden                 @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  userId           String?
+  user             User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel          NotificationChannel
+  label            String
+  address          String?
+  config           Json?
+  enabled          Boolean                @default(true)
+  minimumPriority  IncidentPriority       @default(P1)
+  quietStart       String?
+  quietEnd         String?
+  criticalOverride Boolean                @default(true)
+  verifiedAt       DateTime?
+  deliveries       NotificationDelivery[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  @@index([gardenId, channel])
+  @@index([userId])
+  @@map("notification_endpoints")
+}
+
+model NotificationDelivery {
+  id                String               @id @default(uuid())
+  incidentId        String
+  incident          Incident             @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  endpointId        String
+  endpoint          NotificationEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  status            DeliveryStatus       @default(PENDING)
+  attemptCount      Int                  @default(0)
+  message           String
+  providerMessageId String?
+  idempotencyKey    String               @unique
+  sentAt            DateTime?
+  failedAt          DateTime?
+  error             String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([incidentId])
+  @@index([status, createdAt])
+  @@map("notification_deliveries")
+}
+
+model HarvestEvent {
+  id            String          @id @default(uuid())
+  gardenId      String
+  garden        Garden          @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  plantingId    String?
+  planting      Planting?       @relation(fields: [plantingId], references: [id], onDelete: SetNull)
+  plantId       String?
+  quantity      Decimal         @db.Decimal(16, 4)
+  unit          String
+  grade         String?
+  quality       String?
+  disposition   DispositionType
+  harvestedAt   DateTime        @default(now())
+  expectedValue Decimal?        @db.Decimal(14, 2)
+  realizedValue Decimal?        @db.Decimal(14, 2)
+  currency      String          @default("PHP")
+  notes         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([gardenId, harvestedAt])
+  @@index([plantingId])
+  @@map("harvest_events")
+}
+
+model Market {
+  id                 String        @id @default(uuid())
+  gardenId           String
+  garden             Garden        @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  name               String
+  type               MarketType
+  location           String?
+  currency           String        @default("PHP")
+  active             Boolean       @default(true)
+  prices             MarketPrice[]
+  sales              Sale[]
+  preferredPlantings Planting[]    @relation("PlantingPreferredMarket")
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([gardenId])
+  @@map("markets")
+}
+
+model MarketPrice {
+  id           String   @id @default(uuid())
+  marketId     String
+  market       Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  commodity    String
+  variety      String?
+  grade        String?
+  form         String?
+  minimumPrice Decimal? @db.Decimal(14, 4)
+  typicalPrice Decimal  @db.Decimal(14, 4)
+  maximumPrice Decimal? @db.Decimal(14, 4)
+  quantityUnit String
+  source       String?
+  observedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@index([marketId, commodity, observedAt])
+  @@map("market_prices")
+}
+
+model Sale {
+  id          String   @id @default(uuid())
+  gardenId    String
+  garden      Garden   @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  marketId    String?
+  market      Market?  @relation(fields: [marketId], references: [id], onDelete: SetNull)
+  buyer       String?
+  item        String
+  quantity    Decimal  @db.Decimal(16, 4)
+  unit        String
+  unitPrice   Decimal  @db.Decimal(14, 4)
+  totalAmount Decimal  @db.Decimal(14, 2)
+  currency    String   @default("PHP")
+  soldAt      DateTime @default(now())
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@index([gardenId, soldAt])
+  @@index([marketId])
+  @@map("sales")
+}
+
+model EntityMedia {
+  id         String    @id @default(uuid())
+  gardenId   String
+  garden     Garden    @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  targetType ScopeType
+  targetId   String
+  type       MediaType
+  url        String
+  caption    String?
+  capturedAt DateTime  @default(now())
+  isCover    Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([gardenId, targetType, targetId])
+  @@map("entity_media")
+}

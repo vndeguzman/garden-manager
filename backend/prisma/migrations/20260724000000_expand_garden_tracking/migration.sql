@@ -1,0 +1,102 @@
+ALTER TYPE "CareTaskType" ADD VALUE IF NOT EXISTS 'WEED';
+ALTER TYPE "CareTaskType" ADD VALUE IF NOT EXISTS 'MULCH';
+ALTER TYPE "CareTaskType" ADD VALUE IF NOT EXISTS 'TRANSPLANT';
+ALTER TYPE "CareTaskType" ADD VALUE IF NOT EXISTS 'TRELLIS';
+ALTER TYPE "CareTaskType" ADD VALUE IF NOT EXISTS 'SOIL_TEST';
+ALTER TYPE "CareTaskType" ADD VALUE IF NOT EXISTS 'POLLINATE';
+
+CREATE TYPE "PlotTaskType" AS ENUM (
+  'DRIP_INSPECTION',
+  'DRIP_FLUSH',
+  'FILTER_CLEAN',
+  'SPRINKLER_INSPECTION',
+  'CHECK_MOISTURE',
+  'WEED',
+  'MULCH_CHECK',
+  'SOIL_TEST',
+  'PEST_SCOUT',
+  'BED_MAINTENANCE'
+);
+
+ALTER TABLE gardens
+  ADD COLUMN description TEXT,
+  ADD COLUMN latitude DOUBLE PRECISION,
+  ADD COLUMN longitude DOUBLE PRECISION,
+  ADD COLUMN "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE plants
+  ADD COLUMN "scientificName" TEXT,
+  ADD COLUMN "positionLabel" TEXT,
+  ADD COLUMN "careNotes" TEXT,
+  ADD COLUMN "waterRequirement" TEXT,
+  ADD COLUMN "sunlightRequirement" TEXT,
+  ADD COLUMN "spacingCm" DOUBLE PRECISION,
+  ADD COLUMN "expectedYieldKg" DOUBLE PRECISION,
+  ADD COLUMN "actualYieldKg" DOUBLE PRECISION NOT NULL DEFAULT 0,
+  ADD COLUMN "expectedHarvestAt" TIMESTAMP(3),
+  ADD COLUMN "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE care_tasks
+  ADD COLUMN "isActive" BOOLEAN NOT NULL DEFAULT true;
+
+ALTER TABLE care_task_media
+  ADD COLUMN "capturedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN "isCover" BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE observation_media
+  ADD COLUMN "capturedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN "isCover" BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+CREATE TABLE plot_media (
+  id TEXT NOT NULL,
+  "plotId" TEXT NOT NULL,
+  type "MediaType" NOT NULL,
+  url TEXT NOT NULL,
+  caption TEXT,
+  "capturedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "isCover" BOOLEAN NOT NULL DEFAULT false,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT plot_media_pkey PRIMARY KEY (id),
+  CONSTRAINT plot_media_plot_id_fkey FOREIGN KEY ("plotId") REFERENCES plots(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX plot_media_plot_id_idx ON plot_media("plotId");
+
+CREATE TABLE plant_media (
+  id TEXT NOT NULL,
+  "plantId" TEXT NOT NULL,
+  type "MediaType" NOT NULL,
+  url TEXT NOT NULL,
+  caption TEXT,
+  "capturedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "isCover" BOOLEAN NOT NULL DEFAULT false,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT plant_media_pkey PRIMARY KEY (id),
+  CONSTRAINT plant_media_plant_id_fkey FOREIGN KEY ("plantId") REFERENCES plants(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX plant_media_plant_id_idx ON plant_media("plantId");
+
+CREATE TABLE plot_tasks (
+  id TEXT NOT NULL,
+  "plotId" TEXT NOT NULL,
+  type "PlotTaskType" NOT NULL,
+  title TEXT NOT NULL,
+  "intervalDays" INTEGER NOT NULL,
+  "lastCompletedAt" TIMESTAMP(3),
+  "nextDueAt" TIMESTAMP(3) NOT NULL,
+  notes TEXT,
+  "isActive" BOOLEAN NOT NULL DEFAULT true,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT plot_tasks_pkey PRIMARY KEY (id),
+  CONSTRAINT plot_tasks_plot_id_fkey FOREIGN KEY ("plotId") REFERENCES plots(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX plot_tasks_plot_id_idx ON plot_tasks("plotId");
+CREATE INDEX plot_tasks_next_due_at_idx ON plot_tasks("nextDueAt");
+CREATE UNIQUE INDEX plot_tasks_plot_id_type_title_key ON plot_tasks("plotId", type, title);

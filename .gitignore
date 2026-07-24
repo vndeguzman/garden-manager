@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Generated build and test output
+dist/
+**/dist/
+coverage/
+**/coverage/
+*.tsbuildinfo
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Runtime data
+uploads/
+**/uploads/
+storage/
+**/storage/
+.data/
+postgres-data/
+*.sqlite
+*.sqlite-journal
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+
+# Editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local archives and backups
+*.zip
+*.tar
+*.tar.gz
+backups/

@@ -1,0 +1,16 @@
+{
+  "name": "Garden Manager",
+  "short_name": "Garden",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f1f0ea",
+  "theme_color": "#2f4034",
+  "icons": [
+    {
+      "src": "/garden-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
